@@ -26,7 +26,7 @@ del PIF_predictions_mod['2017Prediction']
 del PIF_predictions_mod['2018Prediction']
 del PIF_predictions_mod['2019Prediction']
 
-PIF_predictions_mod.to_csv('PIF_Predict/autoPIFSumPredictions_g.csv')
+PIF_predictions_mod.to_csv('PIF_Predict/autoPIFSumPredictions_g.csv',index = None)
 
 PREM_predictions['2016_Prediction'] = PREM_predictions['2016Prediction']
 PREM_predictions['2017_Prediction'] = PREM_predictions[['2016Prediction','2015PremSum','2014PremSum']].mean(axis = 1)
@@ -41,4 +41,4 @@ del PREM_predictions_mod['2017Prediction']
 del PREM_predictions_mod['2018Prediction']
 del PREM_predictions_mod['2019Prediction']
 
-PREM_predictions_mod.to_csv('PIF_Predict/autoPREMSumPredictions_g.csv')
+PREM_predictions_mod.to_csv('PIF_Predict/autoPREMSumPredictions_g.csv',index = None)

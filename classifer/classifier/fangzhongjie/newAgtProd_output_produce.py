@@ -44,6 +44,16 @@ def getMostSimZip(target_ZIP,targetdframe,candidframe):
 		if (candidate_dist < dist) & (simiZips.iloc[i,2]!= target_ZIP):
 			mostSimZip = simiZips.iloc[i,2]
 
+	if mostSimZip == None:
+		simiZips = candidframe
+		for i in range(simiZips.shape[0]):
+			candidate_XY = (simiZips.iloc[i,0],simiZips.iloc[i,1])
+			candidate_dist = distance.euclidean(target_XY,candidate_XY)
+			if (candidate_dist < dist) & (simiZips.iloc[i,2]!= target_ZIP):
+				mostSimZip = simiZips.iloc[i,2]
+
+	print mostSimZip
+
 	return mostSimZip
 
 # treat as we will produce NMA in all zipcodes
@@ -63,7 +73,14 @@ zipNoAgents = set(zipAll) - set(zipAgents)
 # Get similar zip of state farm agent placed to those zips that we haven't placed agent
 # this can take long to finish
 similarZips = [getMostSimZip(x,zipsiminfo_allmerged,feature2015agg_byZIP) for x in zipNoAgents]
+t_simi_zips = pd.DataFrame(list(zipNoAgents),similarZips)
+t_simi_zips.reset_index(inplace = True)
+t_simi_zips.columns = ['similarzip','noagentzip']
+t_simi_zips.to_csv('zipSimilarity/noAgent_Sim_Zips.csv',index = None)
 
+# it has about 2068 zips haave no similar zip returned in 75 miles radius, so relook for similar zips nation wide
+
+newsimizip = [getMostSimZip(x,zipsiminfo_allmerged,feature2015agg_byZIP)for x in t_simi_zips[t_simi_zips.similarzip.isnull()].noagentzip]
 # this is current new agent training model frame look alike
 yX_DF_NewAgents3 = pd.read_csv('datapull/tplus3XY_newAgents.csv')
 
