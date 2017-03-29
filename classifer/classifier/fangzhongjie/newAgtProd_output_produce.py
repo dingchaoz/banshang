@@ -45,7 +45,9 @@ def getMostSimZip(target_ZIP,targetdframe,candidframe):
 			mostSimZip = simiZips.iloc[i,2]
 
 	if mostSimZip == None:
+		print "yes"
 		simiZips = candidframe
+		dist = float('inf')
 		for i in range(simiZips.shape[0]):
 			candidate_XY = (simiZips.iloc[i,0],simiZips.iloc[i,1])
 			candidate_dist = distance.euclidean(target_XY,candidate_XY)
@@ -81,6 +83,8 @@ t_simi_zips.to_csv('zipSimilarity/noAgent_Sim_Zips.csv',index = None)
 # it has about 2068 zips haave no similar zip returned in 75 miles radius, so relook for similar zips nation wide
 
 newsimizip = [getMostSimZip(x,zipsiminfo_allmerged,feature2015agg_byZIP)for x in t_simi_zips[t_simi_zips.similarzip.isnull()].noagentzip]
+#: 33690
+
 # this is current new agent training model frame look alike
 yX_DF_NewAgents3 = pd.read_csv('datapull/tplus3XY_newAgents.csv')
 
