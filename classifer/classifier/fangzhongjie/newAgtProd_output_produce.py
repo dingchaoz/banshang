@@ -6,7 +6,7 @@ os.chdir('/san-data/usecase/agentpm/AgentProductionModel/')
 # the similar zip matching to non-agent-zip
 t_simi_zips = pd.read_csv('zipSimilarity/noAgent_Sim_Zips.csv')
 # sim zips completed info csv
-zipsiminfo_allmerged = pd.read_csv('zipSimilarity/allzips_sim_info.csv')
+# zipsiminfo_allmerged = pd.read_csv('zipSimilarity/allzips_sim_info.csv')
 # the features of agent-exist-zip
 feature2015agg_byZIP = pd.read_csv('top10ZipFeatures/byZIPtop10ZipFeaturesAgg_2015.csv')
 
