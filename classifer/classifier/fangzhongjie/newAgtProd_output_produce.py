@@ -3,90 +3,46 @@ import pandas as pd
 import numpy as np
 os.chdir('/san-data/usecase/agentpm/AgentProductionModel/')
 
-# usage example getMostSimZip(target_ZIP,targetdframe,candidframe)
-def getMostSimZip(target_ZIP,targetdframe,candidframe):
-
-# target_ZIP is the zip we are going to find a most similar match for it, this zip
-# is usually a zip without state farm info
-#targetdframe is zipsiminfo_allmerged which has all 40k zips info and contais target_ZIP
-#candidframe is the state farm data zips such as feature2010agg_byZIP which has the candidate zips
-
-# usage example: getMostSimZip(1001,zipsiminfo_allmerged,feature2010agg_byZIP)
-
-	# searc within +/- 0.5 degree which at most is about +/- 70 miles radius search
-	# target_ZIP = 1001
-	target_LAT = targetdframe[targetdframe.ZIP == target_ZIP].Latitude.values[0]
-	target_LON = targetdframe[targetdframe.ZIP == target_ZIP].Longitude.values[0]
-	target_SIZE = targetdframe[targetdframe.ZIP == target_ZIP]['size'].values[0]
-
-	#size mask
-	maskSize = targetdframe['size'] == target_SIZE
-	# lat mask
-	maskLat = (targetdframe['Latitude'] >= target_LAT - 0.5) & (targetdframe['Latitude'] <= target_LAT + 0.5)
-	# lon mask
-	maskLon = (targetdframe['Longitude'] >= target_LON - 0.5) & (targetdframe['Longitude'] <= target_LON + 0.5)
-	# combine mask
-	mask = maskSize & maskLon & maskLat
-
-	# join with all zips to get those info for state farm data zips
-	dframe = targetdframe[targetdframe.ZIP.isin(list(candidframe.HOMEZIP))]
-	# apply mask and filter data
-	simiZips = dframe[mask]
-
-	from scipy.spatial import distance
-
-	target_XY = (targetdframe[targetdframe.ZIP == target_ZIP].x.values[0],targetdframe[targetdframe.ZIP == target_ZIP].y.values[0])
-	dist = 100
-	mostSimZip = None
-	for i in range(simiZips.shape[0]):
-		candidate_XY = (simiZips.iloc[i,0],simiZips.iloc[i,1])
-		candidate_dist = distance.euclidean(target_XY,candidate_XY)
-		if (candidate_dist < dist) & (simiZips.iloc[i,2]!= target_ZIP):
-			mostSimZip = simiZips.iloc[i,2]
-
-	if mostSimZip == None:
-		print "yes"
-		simiZips = candidframe
-		dist = float('inf')
-		for i in range(simiZips.shape[0]):
-			candidate_XY = (simiZips.iloc[i,0],simiZips.iloc[i,1])
-			candidate_dist = distance.euclidean(target_XY,candidate_XY)
-			if (candidate_dist < dist) & (simiZips.iloc[i,2]!= target_ZIP):
-				mostSimZip = simiZips.iloc[i,2]
-
-	print mostSimZip
-
-	return mostSimZip
-
-# treat as we will produce NMA in all zipcodes
-# use demographic features of those zips as features
-# the features were aggregated by the neibor zips that was suggested by history data
-# any zip that has no history data will use the sim matrix
-
-# usage example: getMostSimZip(1001,zipsiminfo_allmerged,feature2010agg_byZIP)
+# the similar zip matching to non-agent-zip
+t_simi_zips = pd.read_csv('zipSimilarity/noAgent_Sim_Zips.csv')
+# sim zips completed info csv
 zipsiminfo_allmerged = pd.read_csv('zipSimilarity/allzips_sim_info.csv')
+# the features of agent-exist-zip
 feature2015agg_byZIP = pd.read_csv('top10ZipFeatures/byZIPtop10ZipFeaturesAgg_2015.csv')
 
-# Get the list of zips where we don't have agents 
-zipAgents = feature2015agg_byZIP.HOMEZIP
-zipAll = zipsiminfo_allmerged.ZIP
-zipNoAgents = set(zipAll) - set(zipAgents)
+# merge to get no-agent-zip's similar zips' neiborzip demo features
+merged_noagentzip = t_simi_zips.merge(feature2015agg_byZIP,left_on='similarzip',right_on='HOMEZIP')
+del merged_noagentzip['similarzip']
+del merged_noagentzip['HOMEZIP']
+merged_noagentzip.rename(columns={'noagentzip': 'HOMEZIP',}, inplace=True)
 
-# Get similar zip of state farm agent placed to those zips that we haven't placed agent
-# this can take long to finish
-similarZips = [getMostSimZip(x,zipsiminfo_allmerged,feature2015agg_byZIP) for x in zipNoAgents]
-t_simi_zips = pd.DataFrame(list(zipNoAgents),similarZips)
-t_simi_zips.reset_index(inplace = True)
-t_simi_zips.columns = ['similarzip','noagentzip']
-t_simi_zips.to_csv('zipSimilarity/noAgent_Sim_Zips.csv',index = None)
+# concat with existing agent zip's demo features to get all
+noagtzip_included_feature2015agg_byZIP = pd.concat([feature2015agg_byZIP,merged_noagentzip],axis = 0)
 
-# it has about 2068 zips haave no similar zip returned in 75 miles radius, so relook for similar zips nation wide
+#manually assign values to those feature columns 
+noagtzip_included_feature2015agg_byZIP['pifsum'] = 0
+noagtzip_included_feature2015agg_byZIP['premsum'] = 0
+noagtzip_included_feature2015agg_byZIP['agtstcode'] = 0
+"""
+needs use the exact market_area def TODO
+"""
+areas = list (set(yX_DF_NewAgents5.MARKET_AREA))
+noagtzip_included_feature2015agg_byZIP['MARKET_AREA'] = np.random.choice(areas,noagtzip_included_feature2015agg_byZIP.shape[0])
+noagtzip_included_feature2015agg_byZIP['STCODE'] = 0
+noagtzip_included_feature2015agg_byZIP['APPT_TYPE'] = 1
+noagtzip_included_feature2015agg_byZIP['APPT_DATE'] = '2016-01-01'
+noagtzip_included_feature2015agg_byZIP['NEW_MARKET'] = 1
+noagtzip_included_feature2015agg_byZIP['asgn_type2'] = 1
+noagtzip_included_feature2015agg_byZIP['ASGN_DATE'] = '2016-01-01'
+noagtzip_included_feature2015agg_byZIP['SUM_of_ASGN_A_POLS'] = 0
+noagtzip_included_feature2015agg_byZIP['SUM_of_ASGN_A_PREM'] = 0
+noagtzip_included_feature2015agg_byZIP['SUM_of_ASGN_F_POLS'] = 0
+noagtzip_included_feature2015agg_byZIP['SUM_of_ASGN_F_PREM'] = 0
 
-newsimizip = [getMostSimZip(x,zipsiminfo_allmerged,feature2015agg_byZIP)for x in t_simi_zips[t_simi_zips.similarzip.isnull()].noagentzip]
-#: 33690
+noagtzip_included_feature2015agg_byZIP.to_csv('datapull/ProdAllZipsFeatures_newAgents.csv',index = None)
 
 # this is current new agent training model frame look alike
-yX_DF_NewAgents3 = pd.read_csv('datapull/tplus3XY_newAgents.csv')
+yX_DF_NewAgents5 = pd.read_csv('datapull/tplus5XY_newAgents.csv')
 
 # get the zip code of those agents in the above list
 # then get zip codes not 

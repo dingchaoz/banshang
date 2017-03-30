@@ -45,6 +45,18 @@ def getMostSimZip(target_ZIP,targetdframe,candidframe):
 		if (candidate_dist < dist) & (simiZips.iloc[i,2]!= target_ZIP):
 			mostSimZip = simiZips.iloc[i,2]
 
+	if mostSimZip == None:
+		#print "yes"
+		simiZips = candidframe
+		dist = float('inf')
+		for i in range(simiZips.shape[0]):
+			candidate_XY = (simiZips.iloc[i,0],simiZips.iloc[i,1])
+			candidate_dist = distance.euclidean(target_XY,candidate_XY)
+			if (candidate_dist < dist) & (simiZips.iloc[i,2]!= target_ZIP):
+				mostSimZip = simiZips.iloc[i,2]
+
+	print mostSimZip
+
 	return mostSimZip
 
 # usage example: getMostSimZip(1001,zipsiminfo_allmerged,feature2010agg_byZIP)
@@ -52,5 +64,15 @@ zipsiminfo_allmerged = pd.read_csv('zipSimilarity/allzips_sim_info.csv')
 feature2015agg_byZIP = pd.read_csv('top10ZipFeatures/byZIPtop10ZipFeaturesAgg_2015.csv')
 
 getMostSimZip(61761,zipsiminfo_allmerged,feature2010agg_byZIP)
+
+# Get similar zip of state farm agent placed to those zips that we haven't placed agent
+# this can take long to finish
+similarZips = [getMostSimZip(x,zipsiminfo_allmerged,feature2015agg_byZIP) for x in zipNoAgents]
+t_simi_zips = pd.DataFrame(list(zipNoAgents),similarZips)
+t_simi_zips.reset_index(inplace = True)
+t_simi_zips.columns = ['similarzip','noagentzip']
+t_simi_zips.similarzip =  t_simi_zips.similarzip.astype(int)
+t_simi_zips.to_csv('zipSimilarity/noAgent_Sim_Zips.csv',index = None)
+
 
 
