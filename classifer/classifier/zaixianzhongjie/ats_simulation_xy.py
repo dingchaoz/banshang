@@ -2,11 +2,11 @@
 VARIABLE SETS VALUE UNKNOW, VALUES NEED TO BE MANUALLY SET
 """
 
-MICRO_SITE_PERC = 0.02 #VARIABLE 1
+MICRO_SITE_PERC = 0.02  # VARIABLE 1
 
-FINISHING_PERC = 0.46 # VARIABLE 2 great idea looking into shoppers data + aoi
+FINISHING_PERC = 0.46  # VARIABLE 2 great idea looking into shoppers data + aoi
 
-#VARIABLE SET 3
+# VARIABLE SET 3
 AGENT1_SELECT_PERC = 1
 AGENT2_SELECT_PERC = 0
 AGENT3_SELECT_PERC = 1 - AGENT2_SELECT_PERC - AGENT1_SELECT_PERC
@@ -31,8 +31,9 @@ agent3_atlas_avg_conv = 0.13
 
 
 """
+
 FORMULAS
-"""
+
 #DERIVED FORMULA
 FINISHING_PERC = total_new_pols * (1 - MICRO_SITE_PERC) / (total_trans * \
 				(AGENT1_SELECT_PERC * agent1_current_avg_conv + \
@@ -61,6 +62,7 @@ sfcom_new_pols_atlas = total_leads * (\
 gain_new_pols = sfcom_new_pols_atlas - sfcom_new_pols
 print gain_new_pols
 
+"""
 """
 # gain_new_pols = total_leads * agent1_select_perc * \
 # (agent1_atlas_avg_conv - agent1_current_avg_conv)

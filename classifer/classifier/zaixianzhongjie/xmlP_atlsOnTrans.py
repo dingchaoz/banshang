@@ -1,9 +1,10 @@
 import glob
 import pandas as pd
-import numpy as np
 import os.path
 
-def ParseAOI(xml):    
+def ParseAOI(xml):
+
+    # Open xml and pass it to var content
     with open(xml, 'r') as content_file:
         content = content_file.read()
 
@@ -27,11 +28,14 @@ def ParseAOI(xml):
     return res,includes,excludes,num_trans,num_ats_on,num_ats_off
 
 if __name__ == '__main__':
-    #main()
+
+    # Fetch all the xml files in the directory
     xmlFiles = glob.glob("*xml")
 
+    # Set saving path
     save_path = 'ontrans/'
-    # Parse xml files
+
+    # Parse xml files iteratively
     for xml in xmlFiles:
 
         date = xml.split('_')[1] # Get the date
@@ -40,29 +44,44 @@ if __name__ == '__main__':
 
         # Construct a df to store includes
         dfincludes = pd.DataFrame(includes,columns = ['Pos','ATLS_SCORE','ASSOC_ID','ATLS_APPLIED'])
+
         # Include date column
         dfincludes['Date'] = date
 
-
-
+        # Array to hold counting of transaction numbers
         transnums = []
+
         # Get list of agents whose atlas score is applied
-        df_on = dfincludes[dfincludes.ATLS_APPLIED == 'true']
+        # df_on = dfincludes[dfincludes.ATLS_APPLIED == 'true']
+
+        # Parse all records regardless of atlas applied status
+        df_on = dfincludes
+
+        ## Counting transaction numbers
+
+        # Initiate transaction
         transnum = 1
+
+        # If the pos increase all the way till it decreases, all the previous records belong to one transaction
         for i in range(1, df_on.shape[0]):
             
             if float(df_on['Pos'].iloc[i]) <= float(df_on['Pos'].iloc[i-1]):
                 transnum += 1        
             transnums.append(transnum)
 
+        # Insert 1
         transnums =  [1] + transnums
+
+        # Pass the array to the df column
         df_on['Trans'] = transnums
 
-        #Save the atlas-on-transaction data to csv
+        # Save the atlas-on-transaction data to csv
         filename = 'atlsOnTrans' + date + '.csv'
+        # saving file path
         compfilename = os.path.join(save_path,filename )
+        # save df
         df_on.to_csv(compfilename,index = None)
-
+        # print out
         print 'saved file: ' + filename
         
 
