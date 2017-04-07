@@ -1,3 +1,14 @@
+"""
+    INPUT: aoi xml file
+    OUTPUT:
+    ontrans/atlsOnTrans20170101.csv to atlsOnTrans20170130.csv which has all transactions with
+    atlas applied
+
+
+"""
+
+
+
 import glob
 import pandas as pd
 import os.path
@@ -8,9 +19,19 @@ def ParseAOI(xml):
     with open(xml, 'r') as content_file:
         content = content_file.read()
 
-    ## New ways to extract atlas score, status, included or excluded status
+    """
+    Extract atlas score, status, included or excluded status
+    The parsing method is very specific suitable to the aoi transaction data xml
+    and may not work for other xml fiels or if the aoi xml structure changed
+
+    """
+
+    # res array holds each transaction as elements
     res = []
+    # each transaction
     subres = []
+
+    # Split to construct transactions
     for w in content.split(">"):
         if "<" in w and '' != w.split("<")[0]:
             values = w.split("<")[0]
@@ -19,10 +40,17 @@ def ParseAOI(xml):
                 subres = []
             subres.append(values)
 
+    # Extract into list
+
+    # agents included in each transaction
     includes = [x for x in res if len(x) == 4]
+    # agents exluded in each transaction
     excludes =  [x for x in res if len(x) > 4][1:]
+    # number of transactions
     num_trans = len([x for x in includes if x[0] == '1'])
+    # number of transactions with atlas score on
     num_ats_on = len([x for x in includes if x[0]=='1' and x[3] == 'true'])
+    # number of transactions with atlas score off
     num_ats_off = len([x for x in includes if x[0]=='1' and x[3] == 'false'])
 
     return res,includes,excludes,num_trans,num_ats_on,num_ats_off
@@ -76,7 +104,7 @@ if __name__ == '__main__':
         df_on['Trans'] = transnums
 
         # Save the atlas-on-transaction data to csv
-        filename = 'atlsOnTrans' + date + '.csv'
+        filename = 'atlsAllTrans' + date + '.csv'
         # saving file path
         compfilename = os.path.join(save_path,filename )
         # save df

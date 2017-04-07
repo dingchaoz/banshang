@@ -1,0 +1,43 @@
+/* Get Monthly Row count   */
+SELECT YEAR_MONTH, count(YEAR_MONTH) FROM FDWATOMCPC.AUTO_PREM_MNTHLY GROUP BY YEAR_MONTH
+
+/* Pull policy count by zip code for a specific month  */
+SELECT 
+	ZIP, 
+	count(CONCAT(CONCAT(CONCAT(CONCAT(STATE, '-'), UNIQUE_DIGIT), '-'), POLICY_NUMBER)) 
+FROM 
+	FDWATOMCPC.AUTO_PREM_MNTHLY 
+WHERE 
+	YEAR_MONTH = '201601' 
+GROUP BY 
+	ZIP, CONCAT(CONCAT(CONCAT(CONCAT(STATE, '-'), UNIQUE_DIGIT), '-'), POLICY_NUMBER)
+
+/* Pull policy count and prem sum by zip code for a specific month  */
+SELECT 
+	ZIP, 
+	count(CONCAT(CONCAT(CONCAT(CONCAT(STATE, '-'), UNIQUE_DIGIT), '-'), POLICY_NUMBER)) as PIF_CNT ,
+	sum(unearned_prem_amt_plcy) as PREM_SUM
+FROM 
+	FDWATOMCPC.AUTO_PREM_MNTHLY 
+WHERE 
+	YEAR_MONTH = '201601' 
+GROUP BY 
+	ZIP, CONCAT(CONCAT(CONCAT(CONCAT(STATE, '-'), UNIQUE_DIGIT), '-'), POLICY_NUMBER)
+
+/* Pull policy count and prem sum by zip code for EACH month  */
+SELECT 
+	ZIP, 
+	YEAR_MONTH,
+	count(CONCAT(CONCAT(CONCAT(CONCAT(STATE, '-'), UNIQUE_DIGIT), '-'), POLICY_NUMBER)) as PIF_CNT ,
+	sum(unearned_prem_amt_plcy) as PREM_SUM
+FROM 
+	FDWATOMCPC.AUTO_PREM_MNTHLY 
+GROUP BY 
+	ZIP, CONCAT(CONCAT(CONCAT(CONCAT(STATE, '-'), UNIQUE_DIGIT), '-'), POLICY_NUMBER),YEAR_MONTH
+
+
+
+/* Attempt to pull policy count by unique policy codes, takes a long time, not sure if most efficient way to pull */
+
+SELECT YEAR_MONTH, count(CONCAT(CONCAT(CONCAT(CONCAT(STATE, '-'), UNIQUE_DIGIT), '-'), POLICY_NUMBER)) FROM FDWATOMCPC.AUTO_PREM_MNTHLY GROUP BY YEAR_MONTH
+
