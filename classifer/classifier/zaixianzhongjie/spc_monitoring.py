@@ -16,17 +16,20 @@ from dateutil.parser import parse
 from datetime import timedelta
 
 # usage:
-# python spc_monitoring.py -t 201610
+# python spc_monitoring.py -t 201612
 # Run SPC for this time:  201611
 
-
+"""
+Set target month, if not specified in argument, set today's month
+"""
 def setTarget(arg = None):
    if arg == None:
       today = datetime.date.today()
    else:
       today = datetime.date(int(arg[:4]),int(arg[4:]),1)
    delta = timedelta(days = 31)
-   target = today + delta
+   target = today - delta
+   #target = today
 
    if len(str(target.month)) == 1:
    		res = str(target.year) + '0' + str(target.month)
@@ -35,6 +38,9 @@ def setTarget(arg = None):
 
    return res
 
+"""
+Validate the date argument format is correct
+"""
 
 def validate(date_text):
     try:
@@ -42,6 +48,9 @@ def validate(date_text):
     except ValueError:
         raise ValueError("Incorrect data format, should be YYYYMM")
 
+"""
+Input handling
+"""
 
 def takeInput(argv):
 
@@ -66,10 +75,21 @@ def takeInput(argv):
    print 'Run SPC for this time: ', target
    return target
 
+
+"""
+read the df which has residual histories
+"""
+
 def getLatestDF():
 	# Read current pd file
 	df_final = pd.read_csv('../csv/ts_actual_forecast_20161-12.csv')
 	return df_final
+
+
+"""
+if the target month is earlier than the latest month in the history df
+exit with message this month has been run
+"""
 
 
 def validateTarget(latestDF,target):
@@ -80,21 +100,11 @@ def validateTarget(latestDF,target):
 
 	if ptargetM < plastM:
 		#print 'Choose a target month later than: ', plastM
-		sys.exit('Choose a target month later than 201612 at least' )
+		sys.exit('The targeted month SPC had been produced' )
 
-# def getPrediction(target):
-
-# 	targetF = target + '_time_series_scores.csv'
-
-# 	try:
-# 		tPrediction_ = pd.read_csv(targetF)
-# 		tPrediction_ = tPrediction_[tPrediction_.CSE_RSLT_IND == 1][['ASSOC_ID','score']]
-# 	except:
-# 		print 'error'
-
-# 	#tPrediction_ = tPrediction_[tPrediction_.CSE_RSLT_IND == 1][['ASSOC_ID','score']]
-
-# 	return tPrediction_
+"""
+Get the actual conv rate of the target month
+"""
 
 def getActual(target):
 
@@ -105,8 +115,15 @@ def getActual(target):
 	except Exception as e:
 		print str(e)
 
+	if len(atlas_t) == 0:
+		sys.exit('The targeted month actual conv data has not been pulled' )
+
+
 	return targetDate,atlas,atlas_t
 
+"""
+Create the actual, socre and err of target month df
+"""
 def getTargetDF(target,atlas_t):
 
 	targetF = target + '_time_series_scores.csv'
@@ -132,6 +149,9 @@ def getTargetDF(target,atlas_t):
 
 # 	return targetDF
 
+"""
+filter out agents who didn't have more than 40 quotes received
+"""
 
 def threshFilter(targetDate,atlas):
 
@@ -148,12 +168,22 @@ def threshFilter(targetDate,atlas):
 
 	return thresh
 
+"""
+Append the target df to history df
+
+"""
+
 def newLatestDF(latestDF,targetDF,thresh):
 	newlatestDF = latestDF.merge(targetDF,on ='ASSOC_ID')
 	newlatestDF = newlatestDF.merge(thresh,on= 'ASSOC_ID', how = 'inner')
+	newlatestDF.to_csv('../csv/ts_actual_forecast_20161-12.csv')
 
 	return newlatestDF
 
+"""
+Run spc
+the commented out section is for plotting
+"""
 
 def runSPC(newlatestDF):
 
@@ -181,6 +211,11 @@ def runSPC(newlatestDF):
 	return dlist
 
 
+"""
+save the spc run result
+"""
+
+
 def saveDlist(dlist,target):
 
 	saveFile = 'spcRun_' + target
@@ -196,6 +231,10 @@ def saveDlist(dlist,target):
 
 	return outlierInfo
 
+"""
+count outliers for target month
+
+"""
 
 def spotOutlier(dinfo,target):
 

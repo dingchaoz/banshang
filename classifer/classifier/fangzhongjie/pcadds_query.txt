@@ -41,3 +41,5 @@ GROUP BY
 
 SELECT YEAR_MONTH, count(CONCAT(CONCAT(CONCAT(CONCAT(STATE, '-'), UNIQUE_DIGIT), '-'), POLICY_NUMBER)) FROM FDWATOMCPC.AUTO_PREM_MNTHLY GROUP BY YEAR_MONTH
 
+/* sqoop run */
+sqoop import --connect jdbc:db2://brpqcnd.opr.statefarm.org:60100/fdw2p --username ejlq -P --query "SELECT ZIP, YEAR_MONTH, count(CONCAT(CONCAT(CONCAT(CONCAT(STATE, '-'), UNIQUE_DIGIT), '-'), POLICY_NUMBER)) as PIF_CNT ,sum(unearned_prem_amt_plcy) as PREM_SUM FROM FDWATOMCPC.AUTO_PREM_MNTHLY GROUP BY ZIP, CONCAT(CONCAT(CONCAT(CONCAT(STATE, '-'), UNIQUE_DIGIT), '-'),POLICY_NUMBER),YEAR_MONTH and \$CONDITIONS" --split-by ZIP --target-dir /user/ejlq/apm
