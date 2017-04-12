@@ -17,7 +17,7 @@ from datetime import timedelta
 
 # usage:
 # python spc_monitoring.py -t 201612
-# Run SPC for this time:  201611
+# Run SPC for this time:  201610
 
 """
 Set target month, if not specified in argument, set today's month
@@ -28,6 +28,8 @@ def setTarget(arg = None):
    else:
       today = datetime.date(int(arg[:4]),int(arg[4:]),1)
    delta = timedelta(days = 31)
+   print delta
+
    target = today - delta
    #target = today
 
@@ -98,7 +100,7 @@ def validateTarget(latestDF,target):
 	plastM = parse(lastMonth[:4]+'/' + lastMonth[4:])
 	ptargetM = parse(target[:4]+'/' + target[4:])
 
-	if ptargetM < plastM:
+	if ptargetM <= plastM:
 		#print 'Choose a target month later than: ', plastM
 		sys.exit('The targeted month SPC had been produced' )
 
@@ -151,6 +153,13 @@ def getTargetDF(target,atlas_t):
 
 """
 filter out agents who didn't have more than 40 quotes received
+TODO: filter out new agents
+201702atlas_time_series.csv column: score, old_score
+Shannon Morrison: (10:23 AM)
+if old_score == 0 - threshold agent
+Shannon Morrison: (10:23 AM)
+if old_score != score - new agent
+
 """
 
 def threshFilter(targetDate,atlas):
@@ -175,7 +184,7 @@ Append the target df to history df
 
 def newLatestDF(latestDF,targetDF,thresh):
 	newlatestDF = latestDF.merge(targetDF,on ='ASSOC_ID')
-	newlatestDF = newlatestDF.merge(thresh,on= 'ASSOC_ID', how = 'inner')
+	newlatestDF = newlatestDF.merge(thresh,on= 'ASSOC_ID', how = 'left')
 	newlatestDF.to_csv('../csv/ts_actual_forecast_20161-12.csv')
 
 	return newlatestDF
@@ -227,7 +236,7 @@ def saveDlist(dlist,target):
 		for line in f:
 			outlierInfo.append(json.loads(line))
 
-	os.remove(saveFile)
+	# os.remove(saveFile)
 
 	return outlierInfo
 
