@@ -83,7 +83,7 @@ read the df which has residual histories
 
 def getLatestDF():
 	# Read current pd file
-	df_final = pd.read_csv('../csv/ts_actual_forecast.csv')
+	df_final = pd.read_csv('../csv/ts_actual_forecast_20161-12.csv')
 	return df_final
 
 
@@ -121,7 +121,7 @@ def getActual(target):
 		sys.exit('The targeted month actual conv data has not been pulled' )
 
 
-	return targetDate,atlas,atlas_t
+	return targetDate,atlas_t
 
 """
 Create the actual, socre and err of target month df
@@ -133,7 +133,13 @@ def getTargetDF(target,atlas_t):
 		sys.exit('There is no targeted score file generated yet, please contact model developer')
 
 	tPrediction_ = pd.read_csv(targetF)
+	# remove new agents
+	tPrediction_ = tPrediction_[tPrediction_['old_score'] == tPrediction_['score']]
+	# remove agents who didn't meet threshold
+	tPrediction_ = tPrediction_[tPrediction_['old_score'] != 0]
+	# get the scores and associate id only
 	tPrediction_ = tPrediction_[tPrediction_.CSE_RSLT_IND == 1][['ASSOC_ID','score']]
+
 	targetDF = tPrediction_.merge(atlas_t,on='ASSOC_ID')
 	targetDF['ERR'] = targetDF.CONV_RATE - targetDF.score
 	targetDF.columns = ['ASSOC_ID','SCORE_'+target,'CONV_RATE_'+target,'ERR_'+target]
@@ -153,30 +159,30 @@ if old_score != score - new agent
 
 """
 
-def threshFilter(targetDate,atlas):
-
-	# Get last 4 month data only preparing compute thresh
-	last4M = atlas[atlas['QUOT_MONTH_new'] <= targetDate]
-	# Apply filter of 40 counts or not
-	thresh = last4M.groupby('ASSOC_ID')['QUOT_CNT'].agg(np.sum) >= 40
-	# Reset index
-	thresh = thresh.reset_index()
-	# Filter out not meeting quote counts agent
-	thresh = thresh[thresh.QUOT_CNT == True]
-	# Delete true or false col
-	del thresh['QUOT_CNT']
-
-	return thresh
+# def threshFilter(targetDate,atlas):
+#
+# 	# Get last 4 month data only preparing compute thresh
+# 	last4M = atlas[atlas['QUOT_MONTH_new'] <= targetDate]
+# 	# Apply filter of 40 counts or not
+# 	thresh = last4M.groupby('ASSOC_ID')['QUOT_CNT'].agg(np.sum) >= 40
+# 	# Reset index
+# 	thresh = thresh.reset_index()
+# 	# Filter out not meeting quote counts agent
+# 	thresh = thresh[thresh.QUOT_CNT == True]
+# 	# Delete true or false col
+# 	del thresh['QUOT_CNT']
+#
+# 	return thresh
 
 """
 Append the target df to history df
 
 """
 
-def newLatestDF(latestDF,targetDF,thresh):
+def newLatestDF(latestDF,targetDF):
 	newlatestDF = latestDF.merge(targetDF,on ='ASSOC_ID')
-	newlatestDF = newlatestDF.merge(thresh,on= 'ASSOC_ID', how = 'left')
-	newlatestDF.to_csv('../csv/ts_actual_forecast.csv',index = None)
+	# newlatestDF = newlatestDF.merge(thresh,on= 'ASSOC_ID', how = 'left')
+	newlatestDF.to_csv('../csv/ts_actual_forecast_20161-12.csv',index = None)
 
 	return newlatestDF
 
@@ -260,7 +266,7 @@ def spotOutlier(dinfo,target):
 
 """
 TODO
-1. fix 201701 not returning agent associate id as key in the outlier file
+1. fix 201701 not returning agent associate id as key in the outlier file -- DONE
 2. set the target delta to 2 month -- DONE
 3. if target month has been ran, exit printing out number of outlier agents -- DONE
 4. generate outlier spc plots monthly
@@ -279,12 +285,10 @@ def main(argv):
 	target = takeInput(argv)
 	latestDF = getLatestDF()
 	validateTarget(latestDF,target)
-	#tPrediction = getPrediction(target)
-	targetDate,atlas,atlas_t = getActual(target)
-	#targetDF = getTargetDF(tPrediction,atlas_t)
+	targetDate,atlas_t = getActual(target)
 	targetDF = getTargetDF(target,atlas_t)
-	thresh = threshFilter(targetDate,atlas)
-	newlatestDF = newLatestDF(latestDF,targetDF,thresh)
+	#thresh = threshFilter(targetDate,atlas)
+	newlatestDF = newLatestDF(latestDF,targetDF)
 	dlist = runSPC(newlatestDF)
 	dinfo = saveDlist(dlist,target)
 	outlier2cont = spotOutlier(dinfo,target)
