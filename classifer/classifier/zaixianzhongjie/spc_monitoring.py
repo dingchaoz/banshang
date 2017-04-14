@@ -100,9 +100,10 @@ def validateTarget(latestDF,target):
 	ptargetM = parse(target[:4]+'/' + target[4:])
 
 	if ptargetM <= plastM:
-		#print 'Choose a target month later than: ', plastM
-		sys.exit('The targeted month SPC had been produced' )
-
+		existing_outlier = eval(open('outlier_' + target,'r').read())
+		num_outlier = len(existing_outlier)
+		print 'The targeted month SPC had been produced, there are',num_outlier,'outliers'
+		sys.exit()
 """
 Get the actual conv rate of the target month
 """
@@ -240,11 +241,11 @@ def spotOutlier(dinfo,target):
 	outlier2_3M = {}
 	for i in dinfo[0]:
 	    if (len(i.values()[0].values()) >=2):
-	        outlier2_3M[i.keys()[0]] = (i.values()[0].values())
+	        outlier2_3M[i.keys()[0]] = (i.values())
 	 
 	outlier2cont = {}       
 	for key, value in outlier2_3M.iteritems():
-		if (value[1][0] - value[0][-1] == 1) and (value[1][0] == 10) :
+		if (value[0].values()[1][0] - value[0].values()[0][-1] == 1) and (value[0].values()[1][0] == 10) :
 			outlier2cont[key] = value
 
 
@@ -260,8 +261,8 @@ def spotOutlier(dinfo,target):
 """
 TODO
 1. fix 201701 not returning agent associate id as key in the outlier file
-2. set the target delta to 2 month
-3. if target month has been ran, exit printing out number of outlier agents
+2. set the target delta to 2 month -- DONE
+3. if target month has been ran, exit printing out number of outlier agents -- DONE
 4. generate outlier spc plots monthly
 4. write a script to generate report of the last x month, x is an input argument
    report like: append plots of previous x months into one pdf report, and also
