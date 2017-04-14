@@ -14,6 +14,7 @@ import sys, getopt
 import datetime
 from dateutil.parser import parse
 from datetime import timedelta
+from dateutil.relativedelta import relativedelta
 
 # usage:
 # python spc_monitoring.py -t 201612
@@ -24,14 +25,12 @@ Set target month, if not specified in argument, set today's month
 """
 def setTarget(arg = None):
    if arg == None:
-      today = datetime.date.today()
+      target = datetime.date.today()
    else:
-      today = datetime.date(int(arg[:4]),int(arg[4:]),1)
-   delta = timedelta(days = 31)
-   print delta
+      target = datetime.date(int(arg[:4]),int(arg[4:]),1)
 
-   target = today - delta
-   #target = today
+
+   target += relativedelta(months=-2)
 
    if len(str(target.month)) == 1:
    		res = str(target.year) + '0' + str(target.month)
@@ -84,7 +83,7 @@ read the df which has residual histories
 
 def getLatestDF():
 	# Read current pd file
-	df_final = pd.read_csv('../csv/ts_actual_forecast_20161-12.csv')
+	df_final = pd.read_csv('../csv/ts_actual_forecast.csv')
 	return df_final
 
 
@@ -142,15 +141,6 @@ def getTargetDF(target,atlas_t):
 
 
 
-# def getTargetDF(tPrediction,atlas_t):
-
-
-# 	targetDF = tPrediction.merge(atlas_t,on='ASSOC_ID')
-# 	targetDF['ERR'] = targetDF.CONV_RATE - targetDF.score
-# 	targetDF.columns = ['ASSOC_ID','SCORE_'+target,'CONV_RATE_'+target,'ERR_'+target]
-
-# 	return targetDF
-
 """
 filter out agents who didn't have more than 40 quotes received
 TODO: filter out new agents
@@ -185,7 +175,7 @@ Append the target df to history df
 def newLatestDF(latestDF,targetDF,thresh):
 	newlatestDF = latestDF.merge(targetDF,on ='ASSOC_ID')
 	newlatestDF = newlatestDF.merge(thresh,on= 'ASSOC_ID', how = 'left')
-	newlatestDF.to_csv('../csv/ts_actual_forecast_20161-12.csv')
+	newlatestDF.to_csv('../csv/ts_actual_forecast.csv',index = None)
 
 	return newlatestDF
 
@@ -265,6 +255,20 @@ def spotOutlier(dinfo,target):
 		json.dump(outlier2cont, fout)
 
 	return outlier2cont
+
+
+"""
+TODO
+1. fix 201701 not returning agent associate id as key in the outlier file
+2. set the target delta to 2 month
+3. if target month has been ran, exit printing out number of outlier agents
+4. generate outlier spc plots monthly
+4. write a script to generate report of the last x month, x is an input argument
+   report like: append plots of previous x months into one pdf report, and also
+   write out those agents quotes, leads, cse conversion rate details
+
+
+"""
 
 
 def main(argv):
