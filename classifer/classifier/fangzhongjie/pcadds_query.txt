@@ -24,7 +24,7 @@ WHERE
 GROUP BY 
 	ZIP, CONCAT(CONCAT(CONCAT(CONCAT(STATE, '-'), UNIQUE_DIGIT), '-'), POLICY_NUMBER)
 
-/* Pull policy count and prem sum by zip code for EACH month  */
+/* Pull unique policy count and prem sum by zip code for EACH month  */
 SELECT 
 	ZIP, 
 	YEAR_MONTH,
@@ -33,7 +33,7 @@ SELECT
 FROM 
 	FDWATOMCPC.AUTO_PREM_MNTHLY 
 GROUP BY 
-	ZIP, CONCAT(CONCAT(CONCAT(CONCAT(STATE, '-'), UNIQUE_DIGIT), '-'), POLICY_NUMBER),YEAR_MONTH
+	ZIP,YEAR_MONTH
 
 
 
@@ -43,20 +43,3 @@ SELECT YEAR_MONTH, count(CONCAT(CONCAT(CONCAT(CONCAT(STATE, '-'), UNIQUE_DIGIT),
 
 /* sqoop run */
 sqoop import --connect jdbc:db2://brpqcnd.opr.statefarm.org:60100/fdw2p --username ejlq -P --query "SELECT ZIP, YEAR_MONTH, count(CONCAT(CONCAT(CONCAT(CONCAT(STATE, '-'), UNIQUE_DIGIT), '-'), POLICY_NUMBER)) as PIF_CNT ,sum(unearned_prem_amt_plcy) as PREM_SUM FROM FDWATOMCPC.AUTO_PREM_MNTHLY GROUP BY ZIP, CONCAT(CONCAT(CONCAT(CONCAT(STATE, '-'), UNIQUE_DIGIT), '-'),POLICY_NUMBER),YEAR_MONTH and \$CONDITIONS" --split-by ZIP --target-dir /user/ejlq/apm
-
-/* set pif count to 1 if not 1, didn’t work but return null instead */
-SELECT ZIP, 
-	YEAR_MONTH,
-	CASE
-    WHEN
-      count(CONCAT(CONCAT(CONCAT(CONCAT(STATE, '-'), UNIQUE_DIGIT), '-'), POLICY_NUMBER)) > 1
-        THEN
-          1
-    END as PIF_CNT,
-	sum(unearned_prem_amt_plcy) as PREM_SUM
-FROM 
-	FDWATOMCPC.AUTO_PREM_MNTHLY 
-GROUP BY 
-	ZIP, CONCAT(CONCAT(CONCAT(CONCAT(STATE, '-'), UNIQUE_DIGIT), '-'), POLICY_NUMBER),YEAR_MONTH
-HAVING 
-	YEAR_MONTH = '200812' 
